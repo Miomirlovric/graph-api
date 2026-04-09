@@ -62,3 +62,20 @@ class GenerateGraphResponse(BaseModel):
     directed: bool
     nodes: List[str]
     edges: List[EdgeInfo]
+
+
+# ── Topological sort ──────────────────────────────────────────────────
+
+class TopologicalSortResponse(BaseModel):
+    order: List[str]
+
+
+# ── Strongly connected components ─────────────────────────────────────
+
+class SCCComponent(BaseModel):
+    vertices: List[str]
+
+
+class StronglyConnectedComponentsResponse(BaseModel):
+    count: int
+    largest: SCCComponent

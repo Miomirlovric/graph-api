@@ -10,6 +10,9 @@ from models.responses import (
     CentralityEntry,
     MaxDegreeEntry,
     PropertiesResult,
+    SCCComponent,
+    StronglyConnectedComponentsResponse,
+    TopologicalSortResponse,
 )
 
 GraphLike = Union[nx.Graph, nx.DiGraph]
@@ -64,4 +67,42 @@ def compute_properties(G: GraphLike) -> PropertiesResult:
         diameter=diameter,
         density=density,
         max_degree=MaxDegreeEntry(vertices=max_vertices, value=max_val),
+    )
+
+
+# ── Topological sort ──────────────────────────────────────────────────
+def validate_dag(G: nx.DiGraph) -> str | None:
+    """Return an error message if G is not a DAG, otherwise None."""
+    cycle = None
+    try:
+        cycle = nx.find_cycle(G)
+    except nx.NetworkXNoCycle:
+        return None
+    edge = next(iter(cycle))
+    return f"Graph contains a cycle (e.g. {edge[0]} → {edge[1]}): topological sort requires a DAG."
+
+
+def compute_topological_sort(G: nx.DiGraph) -> TopologicalSortResponse:
+    """Return one valid topological ordering of a DAG."""
+    order = list(nx.topological_sort(G))
+    return TopologicalSortResponse(order=order)
+
+
+# ── Strongly connected components ─────────────────────────────────────
+def validate_scc_graph(G: nx.DiGraph) -> str | None:
+    if all(len(c) == 1 for c in nx.strongly_connected_components(G)):
+        return (
+            "Graph has no cycles: every vertex is its own SCC. "
+            "Add at least one directed cycle so the question is non-trivial."
+        )
+    return None
+
+
+def compute_scc(G: nx.DiGraph) -> StronglyConnectedComponentsResponse:
+    """Return the number of SCCs and the largest one (most vertices)."""
+    components = list(nx.strongly_connected_components(G))
+    largest_vertices = sorted(max(components, key=len))
+    return StronglyConnectedComponentsResponse(
+        count=len(components),
+        largest=SCCComponent(vertices=largest_vertices),
     )

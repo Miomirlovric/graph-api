@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -14,6 +14,10 @@ class GraphRequest(BaseModel):
     directed: bool = False
 
 
+GraphType = Literal["default", "dag", "scc"]
+
+
 class RandomGraphRequest(BaseModel):
     vertex_count: int
     directed: bool = False
+    graph_type: GraphType = "default"

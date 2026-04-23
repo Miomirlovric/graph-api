@@ -90,7 +90,7 @@ class StronglyConnectedComponentsResponse(BaseModel):
 class ShortestPathEntry(BaseModel):
     """Distance and path from source to a single target vertex."""
     vertex: str
-    distance: float
+    distance: NullableFloat = None
     path: List[str]
 
 

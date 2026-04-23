@@ -29,9 +29,15 @@ def generate_random_graph(
             for j in range(i + 1, vertex_count):
                 if random.random() < p:
                     G.add_edge(i, j)
-        if G.number_of_edges() == 0:
-            for i in range(vertex_count - 1):
-                G.add_edge(i, i + 1)
+        # Ensure DAG is weakly connected
+        undirected_view = G.to_undirected()
+        components = list(nx.connected_components(undirected_view))
+        for ci in range(len(components) - 1):
+            # Get a node from each component and add edge in topological order
+            nodes_a = sorted(components[ci])
+            nodes_b = sorted(components[ci + 1])
+            # Add edge from higher-indexed component to lower to maintain DAG property
+            G.add_edge(nodes_a[-1], nodes_b[0])
     elif graph_type == "scc":
         G = nx.DiGraph()
         G.add_nodes_from(range(vertex_count))
@@ -54,9 +60,22 @@ def generate_random_graph(
         p_base = min(0.4, 4.0 / vertex_count)
         p = p_base / 2 if directed else p_base
         G = nx.gnp_random_graph(vertex_count, p, directed=directed, seed=rng)
-        if G.number_of_edges() == 0:
-            for i in range(vertex_count - 1):
-                G.add_edge(i, i + 1)
+        # Ensure graph is connected
+        if directed:
+            # For directed graphs, ensure weak connectivity
+            undirected_view = G.to_undirected()
+            components = list(nx.connected_components(undirected_view))
+            for i in range(len(components) - 1):
+                node_a = next(iter(components[i]))
+                node_b = next(iter(components[i + 1]))
+                G.add_edge(node_a, node_b)
+        else:
+            # For undirected graphs, connect all components
+            components = list(nx.connected_components(G))
+            for i in range(len(components) - 1):
+                node_a = next(iter(components[i]))
+                node_b = next(iter(components[i + 1]))
+                G.add_edge(node_a, node_b)
 
     mapping = {i: labels[i] for i in range(vertex_count)}
     G = nx.relabel_nodes(G, mapping)

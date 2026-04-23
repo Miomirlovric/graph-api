@@ -19,10 +19,22 @@ def generate(req: RandomGraphRequest) -> GenerateGraphResponse:
     if req.vertex_count > 500:
         raise HTTPException(status_code=400, detail="vertex_count must be at most 500.")
 
-    G = generate_random_graph(req.vertex_count, req.directed, req.graph_type)
+    G = generate_random_graph(
+        req.vertex_count,
+        req.directed,
+        req.graph_type,
+        req.include_weights,
+        req.weight_range,
+    )
     is_directed = req.directed or req.graph_type != "default"
+
+    edges = []
+    for u, v, data in G.edges(data=True):
+        weight = data.get("weight") if req.include_weights else None
+        edges.append(EdgeInfo(source=str(u), target=str(v), weight=weight))
+
     return GenerateGraphResponse(
         directed=is_directed,
         nodes=list(G.nodes),
-        edges=[EdgeInfo(source=str(u), target=str(v)) for u, v in G.edges],
+        edges=edges,
     )

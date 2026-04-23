@@ -7,6 +7,7 @@ from routes.health import router as health_router
 from routes.image import router as image_router
 from routes.properties import router as properties_router
 from routes.scc import router as scc_router
+from routes.shortest_paths import router as shortest_paths_router
 from routes.topological_sort import router as topological_sort_router
 
 app = FastAPI(
@@ -25,6 +26,7 @@ app.include_router(properties_router)
 app.include_router(image_router)
 app.include_router(topological_sort_router)
 app.include_router(scc_router)
+app.include_router(shortest_paths_router)
 
 # ── Entry point ──────────────────────────────────────────────────────
 if __name__ == "__main__":

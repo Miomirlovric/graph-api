@@ -1,6 +1,6 @@
 import random
 import string
-from typing import Literal
+from typing import Literal, Optional, Tuple
 
 import networkx as nx
 
@@ -11,6 +11,8 @@ def generate_random_graph(
     vertex_count: int,
     directed: bool,
     graph_type: Literal["default", "dag", "scc"] = "default",
+    include_weights: bool = False,
+    weight_range: Tuple[float, float] = (0.1, 2.0),
 ) -> nx.Graph:
     if vertex_count <= 26:
         labels = list(string.ascii_uppercase[:vertex_count])
@@ -57,7 +59,14 @@ def generate_random_graph(
                 G.add_edge(i, i + 1)
 
     mapping = {i: labels[i] for i in range(vertex_count)}
-    return nx.relabel_nodes(G, mapping)
+    G = nx.relabel_nodes(G, mapping)
+
+    # Assign random weights if requested
+    if include_weights:
+        for u, v in G.edges():
+            G[u][v]["weight"] = round(random.uniform(*weight_range), 2)
+
+    return G
 
 
 def build_graph(req: GraphRequest) -> nx.Graph:
@@ -65,7 +74,10 @@ def build_graph(req: GraphRequest) -> nx.Graph:
     if req.nodes:
         G.add_nodes_from(req.nodes)
     for e in req.edges:
-        G.add_edge(e.source, e.target)
+        if e.weight is not None:
+            G.add_edge(e.source, e.target, weight=e.weight)
+        else:
+            G.add_edge(e.source, e.target)
     return G
 
 
@@ -74,5 +86,8 @@ def build_directed_graph(req: GraphRequest) -> nx.DiGraph:
     if req.nodes:
         G.add_nodes_from(req.nodes)
     for e in req.edges:
-        G.add_edge(e.source, e.target)
+        if e.weight is not None:
+            G.add_edge(e.source, e.target, weight=e.weight)
+        else:
+            G.add_edge(e.source, e.target)
     return G

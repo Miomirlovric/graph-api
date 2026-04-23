@@ -65,6 +65,18 @@ def draw_graph(G: GraphLike) -> io.BytesIO:
             width=2.0,
         )
 
+    # Draw edge weight labels if weights are present (skip weights of 0)
+    edge_weights = nx.get_edge_attributes(G, "weight")
+    if edge_weights:
+        edge_labels = {k: f"{v:.2f}" for k, v in edge_weights.items() if v != 0}
+        nx.draw_networkx_edge_labels(
+            G, pos, ax=ax,
+            edge_labels=edge_labels,
+            font_size=9,
+            font_color="#333333",
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="none", alpha=0.7),
+        )
+
     ax.axis("off")
 
     buf = io.BytesIO()

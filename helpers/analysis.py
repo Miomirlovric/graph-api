@@ -11,6 +11,8 @@ from models.responses import (
     MaxDegreeEntry,
     PropertiesResult,
     SCCComponent,
+    ShortestPathEntry,
+    ShortestPathsResponse,
     StronglyConnectedComponentsResponse,
     TopologicalSortResponse,
 )
@@ -105,4 +107,36 @@ def compute_scc(G: nx.DiGraph) -> StronglyConnectedComponentsResponse:
     return StronglyConnectedComponentsResponse(
         count=len(components),
         largest=SCCComponent(vertices=largest_vertices),
+    )
+
+
+# ── Shortest paths (Dijkstra) ───────────────────────────────────────────
+def compute_shortest_paths(G: nx.Graph, source: str) -> ShortestPathsResponse:
+    distances, paths = nx.single_source_dijkstra(G, source)
+
+    entries: list[ShortestPathEntry] = []
+    for vertex in sorted(G.nodes()):
+        if vertex == source:
+            continue
+        dist = distances.get(vertex, float("inf"))
+        path = paths.get(vertex, [])
+        entries.append(ShortestPathEntry(
+            vertex=vertex,
+            distance=round(dist, 2),
+            path=path,
+        ))
+
+    reachable = [(v, d) for v, d in distances.items() if v != source and d < float("inf")]
+    if reachable:
+        farthest_vertex, _ = max(reachable, key=lambda x: x[1])
+        farthest_path = paths[farthest_vertex]
+    else:
+        farthest_vertex = source
+        farthest_path = [source]
+
+    return ShortestPathsResponse(
+        source=source,
+        paths=entries,
+        farthest_vertex=farthest_vertex,
+        farthest_path=farthest_path,
     )

@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from helpers.analysis import compute_properties
-from helpers.graph_builder import build_graph
+from helpers.graph_factory import GraphFactory
+from helpers.route_handler import execute_analysis
+from helpers.validators import EdgesExistValidator
 from models.graph import GraphRequest
 from models.responses import PropertiesResponse
 
@@ -16,7 +18,9 @@ def properties(req: GraphRequest) -> PropertiesResponse:
     - density  (rounded to 3 decimals)
     - max degree vertex and its value
     """
-    if not req.edges:
-        raise HTTPException(status_code=400, detail="At least one edge is required.")
-    G = build_graph(req)
-    return PropertiesResponse(properties=compute_properties(G))
+    return execute_analysis(
+        req,
+        pre_build_validators=[EdgesExistValidator()],
+        graph_builder=GraphFactory.from_request,
+        compute=lambda G, _: PropertiesResponse(properties=compute_properties(G)),
+    )

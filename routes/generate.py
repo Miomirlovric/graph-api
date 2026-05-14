@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
-from helpers.graph_builder import generate_random_graph
+from helpers.graph_factory import GraphFactory
+from helpers.validators import ValidationChain, VertexCountValidator
 from models.graph import RandomGraphRequest
 from models.responses import EdgeInfo, GenerateGraphResponse
 
@@ -14,18 +15,9 @@ def generate(req: RandomGraphRequest) -> GenerateGraphResponse:
     Supply only the number of vertices and whether it should be directed.
     The returned nodes/edges can be passed directly to /analyze/* endpoints.
     """
-    if req.vertex_count < 2:
-        raise HTTPException(status_code=400, detail="vertex_count must be at least 2.")
-    if req.vertex_count > 500:
-        raise HTTPException(status_code=400, detail="vertex_count must be at most 500.")
+    ValidationChain([VertexCountValidator(minimum=2, maximum=500)]).run(req)
 
-    G = generate_random_graph(
-        req.vertex_count,
-        req.directed,
-        req.graph_type,
-        req.include_weights,
-        req.weight_range,
-    )
+    G = GraphFactory.random(req)
     is_directed = req.directed or req.graph_type != "default"
 
     edges = []

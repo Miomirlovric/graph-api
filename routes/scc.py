@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
-from helpers.analysis import compute_scc, validate_scc_graph
-from helpers.graph_builder import build_directed_graph
+from helpers.analysis import compute_scc
+from helpers.graph_factory import GraphFactory
+from helpers.route_handler import execute_analysis
+from helpers.validators import EdgesExistValidator, SccValidator
 from models.graph import GraphRequest
 from models.responses import StronglyConnectedComponentsResponse
 
@@ -12,9 +14,10 @@ router = APIRouter(prefix="/analyze", tags=["Strongly Connected Components"])
 def strongly_connected_components(
     req: GraphRequest,
 ) -> StronglyConnectedComponentsResponse:
-    if not req.edges:
-        raise HTTPException(status_code=400, detail="At least one edge is required.")
-    G = build_directed_graph(req)
-    if error := validate_scc_graph(G):
-        raise HTTPException(status_code=422, detail=error)
-    return compute_scc(G)
+    return execute_analysis(
+        req,
+        pre_build_validators=[EdgesExistValidator()],
+        graph_builder=GraphFactory.directed_from_request,
+        post_build_validators=[SccValidator()],
+        compute=lambda G, _: compute_scc(G),
+    )

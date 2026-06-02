@@ -72,6 +72,7 @@ class GenerateGraphResponse(BaseModel):
 
 class TopologicalSortResponse(BaseModel):
     order: List[str]
+    orders: List[List[str]]
 
 
 # ── Strongly connected components ─────────────────────────────────────

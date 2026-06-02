@@ -85,9 +85,12 @@ def validate_dag(G: nx.DiGraph) -> str | None:
 
 
 def compute_topological_sort(G: nx.DiGraph) -> TopologicalSortResponse:
-    """Return one valid topological ordering of a DAG."""
-    order = list(nx.topological_sort(G))
-    return TopologicalSortResponse(order=order)
+    """Return ALL valid topological orderings of a DAG."""
+    all_orders = [list(o) for o in nx.all_topological_sorts(G)]
+    return TopologicalSortResponse(
+        order=all_orders[0],   # first ordering (backward-compat field)
+        orders=all_orders,     # full list of valid orderings
+    )
 
 
 # ── Strongly connected components ─────────────────────────────────────

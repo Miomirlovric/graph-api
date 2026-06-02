@@ -41,21 +41,33 @@ def generate_random_graph(
     elif graph_type == "scc":
         G = nx.DiGraph()
         G.add_nodes_from(range(vertex_count))
-        k = max(2, min(4, vertex_count // 3))
-        groups: list[list[int]] = [[] for _ in range(k)]
-        for idx in range(vertex_count):
-            groups[idx % k].append(idx)
-        # make each group a directed cycle (strongly connected)
+        k_max = max(2, min(4, vertex_count - 1))
+        k = random.randint(2, k_max)
+        indices = list(range(vertex_count))
+        random.shuffle(indices)
+        groups: list[list[int]] = [[indices.pop()] for _ in range(k)]
+        for idx in indices:
+            groups[random.randint(0, k - 1)].append(idx)
+
+        if all(len(g) == 1 for g in groups) and len(groups) >= 2:
+            groups[0].extend(groups.pop())
+
         for group in groups:
-            if len(group) == 1:
-                # single-node SCC — no self-loop needed
-                pass
-            else:
-                for gi in range(len(group)):
-                    G.add_edge(group[gi], group[(gi + 1) % len(group)])
-        # add one forward cross-edge per consecutive group pair
+            if len(group) >= 2:
+                cycle = group[:]
+                random.shuffle(cycle)
+                for gi in range(len(cycle)):
+                    G.add_edge(cycle[gi], cycle[(gi + 1) % len(cycle)])
+
         for gi in range(k - 1):
-            G.add_edge(groups[gi][0], groups[gi + 1][0])
+            src = random.choice(groups[gi])
+            tgt = random.choice(groups[gi + 1])
+            G.add_edge(src, tgt)
+            if random.random() < 0.3:
+                src2 = random.choice(groups[gi])
+                tgt2 = random.choice(groups[gi + 1])
+                if not G.has_edge(src2, tgt2):
+                    G.add_edge(src2, tgt2)
     else:
         p_base = min(0.4, 4.0 / vertex_count)
         p = p_base / 2 if directed else p_base

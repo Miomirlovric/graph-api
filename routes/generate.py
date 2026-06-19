@@ -18,7 +18,7 @@ def generate(req: RandomGraphRequest) -> GenerateGraphResponse:
     ValidationChain([VertexCountValidator(minimum=2, maximum=500)]).run(req)
 
     G = GraphFactory.random(req)
-    is_directed = req.directed or req.graph_type != "default"
+    is_directed = G.is_directed()
 
     edges = []
     for u, v, data in G.edges(data=True):

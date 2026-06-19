@@ -46,18 +46,12 @@ def compute_centralities(G: GraphLike) -> CentralitiesResult:
 def compute_properties(G: GraphLike) -> PropertiesResult:
     density = round(nx.density(G), 3)
 
+    # The diameter is only well-defined when the graph is connected (strongly
+    # connected, if directed). The route's DiameterComputableValidator rejects
+    # graphs that aren't, so by here nx.diameter always returns a true value —
+    # The guard below only covers direct callers that bypass the validator.
     try:
-        if G.is_directed():
-            if nx.is_strongly_connected(G):
-                diameter = nx.diameter(G)
-            else:
-                diameter = nx.diameter(G.to_undirected())
-        else:
-            if nx.is_connected(G):
-                diameter = nx.diameter(G)
-            else:
-                largest_cc = max(nx.connected_components(G), key=len)
-                diameter = nx.diameter(G.subgraph(largest_cc))
+        diameter = nx.diameter(G)
     except nx.NetworkXError:
         diameter = 0
 
@@ -91,6 +85,31 @@ def compute_topological_sort(G: nx.DiGraph) -> TopologicalSortResponse:
         order=all_orders[0],   # first ordering (backward-compat field)
         orders=all_orders,     # full list of valid orderings
     )
+
+
+# ── Diameter / connectivity ───────────────────────────────────────────
+def validate_diameter_computable(G: GraphLike) -> str | None:
+    """Return an error message if the graph's diameter is not well-defined.
+
+    The diameter requires every vertex to reach every other vertex:
+    a directed graph must be strongly connected, an undirected graph
+    must be connected. Otherwise some distances are infinite and the
+    diameter (and the rest of the analysis question) is meaningless.
+    """
+    if G.is_directed():
+        if not nx.is_strongly_connected(G):
+            return (
+                "Directed graph is not strongly connected: the diameter is "
+                "undefined because some vertices cannot reach each other. "
+                "Add edges so every vertex is reachable from every other vertex."
+            )
+    elif not nx.is_connected(G):
+        return (
+            "Graph is not connected: the diameter is undefined because some "
+            "vertices cannot reach each other. Add edges so the graph is "
+            "connected."
+        )
+    return None
 
 
 # ── Strongly connected components ─────────────────────────────────────

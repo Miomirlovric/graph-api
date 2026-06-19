@@ -18,7 +18,7 @@ class GraphRequest(BaseModel):
     directed: bool = False
 
 
-GraphType = Literal["default", "dag", "scc"]
+GraphType = Literal["default", "dag", "scc", "properties"]
 
 
 class RandomGraphRequest(BaseModel):

@@ -14,7 +14,11 @@ from fastapi import HTTPException
 
 import networkx as nx
 
-from helpers.analysis import validate_dag, validate_scc_graph
+from helpers.analysis import (
+    validate_dag,
+    validate_diameter_computable,
+    validate_scc_graph,
+)
 from models.graph import GraphRequest, RandomGraphRequest, ShortestPathsRequest
 
 
@@ -115,4 +119,16 @@ class DagValidator(Validator):
 class SccValidator(Validator):
     def validate(self, G: nx.DiGraph) -> None:
         if error := validate_scc_graph(G):
+            raise HTTPException(status_code=422, detail=error)
+
+
+class DiameterComputableValidator(Validator):
+    """Reject graphs whose diameter is undefined.
+
+    Directed graphs must be strongly connected; undirected graphs must be
+    connected. Used by the properties question (diameter is one of its parts).
+    """
+
+    def validate(self, G: nx.Graph) -> None:
+        if error := validate_diameter_computable(G):
             raise HTTPException(status_code=422, detail=error)

@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from helpers.analysis import compute_properties
 from helpers.graph_factory import GraphFactory
 from helpers.route_handler import execute_analysis
-from helpers.validators import EdgesExistValidator
+from helpers.validators import DiameterComputableValidator, EdgesExistValidator
 from models.graph import GraphRequest
 from models.responses import PropertiesResponse
 
@@ -22,5 +22,6 @@ def properties(req: GraphRequest) -> PropertiesResponse:
         req,
         pre_build_validators=[EdgesExistValidator()],
         graph_builder=GraphFactory.from_request,
+        post_build_validators=[DiameterComputableValidator()],
         compute=lambda G, _: PropertiesResponse(properties=compute_properties(G)),
     )

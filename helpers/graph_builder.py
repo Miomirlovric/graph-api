@@ -10,7 +10,7 @@ from models.graph import GraphRequest
 def generate_random_graph(
     vertex_count: int,
     directed: bool,
-    graph_type: Literal["default", "dag", "scc"] = "default",
+    graph_type: Literal["default", "dag", "scc", "properties"] = "default",
     include_weights: bool = False,
     weight_range: Tuple[float, float] = (0.1, 2.0),
 ) -> nx.Graph:
@@ -68,6 +68,23 @@ def generate_random_graph(
                 tgt2 = random.choice(groups[gi + 1])
                 if not G.has_edge(src2, tgt2):
                     G.add_edge(src2, tgt2)
+    elif graph_type == "properties":
+        G = nx.DiGraph() if directed else nx.Graph()
+        G.add_nodes_from(range(vertex_count))
+        cycle = list(range(vertex_count))
+        random.shuffle(cycle)
+        for ci in range(vertex_count):
+            G.add_edge(cycle[ci], cycle[(ci + 1) % vertex_count])
+        p_extra = min(0.3, 3.0 / vertex_count)
+        for i in range(vertex_count):
+            for j in range(vertex_count):
+                if i == j or G.has_edge(i, j):
+                    continue
+                # Undirected: only consider each pair once to avoid duplicate work.
+                if not directed and j < i:
+                    continue
+                if random.random() < p_extra:
+                    G.add_edge(i, j)
     else:
         p_base = min(0.4, 4.0 / vertex_count)
         p = p_base / 2 if directed else p_base

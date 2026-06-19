@@ -72,7 +72,7 @@ def draw_graph(G: GraphLike) -> io.BytesIO:
         nx.draw_networkx_edge_labels(
             G, pos, ax=ax,
             edge_labels=edge_labels,
-            font_size=9,
+            font_size=13,
             font_color="#333333",
             bbox=dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="none", alpha=0.7),
         )
